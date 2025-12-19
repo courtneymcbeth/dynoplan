@@ -1,11 +1,11 @@
-#include "dynoplan/dbastar/options.hpp"
+#include "dynoplan/tdbastar/options.hpp"
 #include "dynobench/general_utils.hpp"
 #include <boost/program_options.hpp>
 
 namespace dynoplan {
 
-void Options_dbastar::__load_data(void *source, bool boost, bool write,
-                                  const std::string &be) {
+void Options_tdbastar::__load_data(void *source, bool boost, bool write,
+                                   const std::string &be) {
 
   Loader loader;
   loader.use_boost = boost;
@@ -41,32 +41,32 @@ void Options_dbastar::__load_data(void *source, bool boost, bool write,
   loader.set(VAR_WITH_NAME(check_cols));
 }
 
-void Options_dbastar::add_options(po::options_description &desc) {
+void Options_tdbastar::add_options(po::options_description &desc) {
   __load_data(&desc, true);
 }
 
-void Options_dbastar::print(std::ostream &out, const std::string &be,
-                            const std::string &af) const {
+void Options_tdbastar::print(std::ostream &out, const std::string &be,
+                             const std::string &af) const {
 
-  auto ptr = const_cast<Options_dbastar *>(this);
+  auto ptr = const_cast<Options_tdbastar *>(this);
   ptr->__load_data(&out, false, true, be);
 }
 
-void Options_dbastar::read_from_yaml(const char *file) {
+void Options_tdbastar::read_from_yaml(const char *file) {
   std::cout << "loading file: " << file << std::endl;
   YAML::Node node = YAML::LoadFile(file);
   read_from_yaml(node);
 }
 
-void Options_dbastar::read_from_yaml(YAML::Node &node) {
+void Options_tdbastar::read_from_yaml(YAML::Node &node) {
 
   if (node["options_dbastar"]) {
-    __read_from_node(node["options_dbastar"]);
+    __read_from_node(node["options_tdbastar"]);
   } else {
     __read_from_node(node);
   }
 }
-void Options_dbastar::__read_from_node(const YAML::Node &node) {
+void Options_tdbastar::__read_from_node(const YAML::Node &node) {
   __load_data(&const_cast<YAML::Node &>(node), false);
 }
 
