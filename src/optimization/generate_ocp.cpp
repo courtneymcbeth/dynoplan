@@ -50,7 +50,7 @@ generate_problem(const Generate_params &gen_args,
 
   std::vector<ptr<Cost>> feats_terminal;
   ptr<crocoddyl::ActionModelAbstract> am_terminal;
-  std::vector<boost::shared_ptr<crocoddyl::ActionModelAbstract>> amq_runs;
+  std::vector<std::shared_ptr<crocoddyl::ActionModelAbstract>> amq_runs;
 
   if (gen_args.free_time && gen_args.contour_control) {
     CHECK(false, AT);
@@ -388,7 +388,7 @@ generate_problem(const Generate_params &gen_args,
       // feats_run.push_back(contour_alpha_x);
     }
 
-    boost::shared_ptr<crocoddyl::ActionModelAbstract> am_run =
+    std::shared_ptr<crocoddyl::ActionModelAbstract> am_run =
         to_am_base(mk<ActionModelDyno>(dyn, feats_run));
 
     if (use_hard_bounds) {
@@ -433,7 +433,7 @@ generate_problem(const Generate_params &gen_args,
   if (options_trajopt.use_finite_diff) {
     std::cout << "using finite diff!" << std::endl;
 
-    std::vector<boost::shared_ptr<crocoddyl::ActionModelAbstract>>
+    std::vector<std::shared_ptr<crocoddyl::ActionModelAbstract>>
         amq_runs_diff(amq_runs.size());
 
     // double disturbance = 1e-4; // should be high, becaues I have collisions
