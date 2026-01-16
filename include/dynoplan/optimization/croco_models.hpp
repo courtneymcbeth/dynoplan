@@ -172,6 +172,15 @@ public:
     state->JintegrateTransport(x, dx, Jin);
   }
 
+  virtual std::shared_ptr<crocoddyl::StateBase> cloneAsDouble() const override {
+    return std::make_shared<StateCrocoDyno>(state);
+  }
+
+  virtual std::shared_ptr<crocoddyl::StateBase> cloneAsFloat() const override {
+    // For now, just return double version as we don't have float implementation
+    return std::make_shared<StateCrocoDyno>(state);
+  }
+
 protected:
   using crocoddyl::StateAbstractTpl<Scalar>::nx_;
   using crocoddyl::StateAbstractTpl<Scalar>::ndx_;
@@ -1171,6 +1180,15 @@ public:
   virtual std::shared_ptr<ActionDataAbstract> createData();
   virtual bool checkData(const std::shared_ptr<ActionDataAbstract> &data);
 
+  virtual std::shared_ptr<crocoddyl::ActionModelBase> cloneAsDouble() const {
+    return std::make_shared<ActionModelDyno>(dynamics, features);
+  }
+
+  virtual std::shared_ptr<crocoddyl::ActionModelBase> cloneAsFloat() const {
+    // For now, just return double version as we don't have float implementation
+    return std::make_shared<ActionModelDyno>(dynamics, features);
+  }
+
   virtual void print(std::ostream &os) const;
 };
 
@@ -1218,6 +1236,15 @@ public:
 
   virtual std::shared_ptr<ActionDataAbstract> createData();
   virtual bool checkData(const std::shared_ptr<ActionDataAbstract> &data);
+
+  virtual std::shared_ptr<crocoddyl::ActionModelBase> cloneAsDouble() const {
+    return std::make_shared<ActionModelDynov2>(model_robot, features, control_mode);
+  }
+
+  virtual std::shared_ptr<crocoddyl::ActionModelBase> cloneAsFloat() const {
+    // For now, just return double version as we don't have float implementation
+    return std::make_shared<ActionModelDynov2>(model_robot, features, control_mode);
+  }
 
   virtual void print(std::ostream &os) const;
 };

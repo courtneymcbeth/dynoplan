@@ -10,7 +10,9 @@ project(
 # find_package(pinocchio REQUIRED)
 find_package(Boost REQUIRED COMPONENTS program_options serialization
                                        stacktrace_basic)
-find_package(ompl REQUIRED)
+# Commented out to use OMPL from parent project (Multi-Robot-OMPL) instead of system OMPL
+# This prevents version conflicts between OMPL v17 (local) and v18 (system ROS Jazzy)
+# find_package(ompl REQUIRED)
 
 include(FindThreads)
 

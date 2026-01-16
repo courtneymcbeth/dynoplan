@@ -981,11 +981,11 @@ void ActionModelDyno::calcDiff(
 }
 
 std::shared_ptr<crocoddyl::ActionDataAbstract> ActionModelDyno::createData() {
-  return boost::allocate_shared<Data>(Eigen::aligned_allocator<Data>(), this);
+  return std::allocate_shared<Data>(Eigen::aligned_allocator<Data>(), this);
 }
 bool ActionModelDyno::checkData(
     const std::shared_ptr<ActionDataAbstract> &data) {
-  std::shared_ptr<Data> d = boost::dynamic_pointer_cast<Data>(data);
+  std::shared_ptr<Data> d = std::dynamic_pointer_cast<Data>(data);
   if (d != NULL) {
     return true;
   } else {
@@ -1295,11 +1295,11 @@ void ActionModelDynov2::calcDiff(
 
 std::shared_ptr<crocoddyl::ActionDataAbstract>
 ActionModelDynov2::createData() {
-  return boost::allocate_shared<Data>(Eigen::aligned_allocator<Data>(), this);
+  return std::allocate_shared<Data>(Eigen::aligned_allocator<Data>(), this);
 }
 bool ActionModelDynov2::checkData(
     const std::shared_ptr<ActionDataAbstract> &data) {
-  std::shared_ptr<Data> d = boost::dynamic_pointer_cast<Data>(data);
+  std::shared_ptr<Data> d = std::dynamic_pointer_cast<Data>(data);
   if (d != NULL) {
     return true;
   } else {
@@ -1740,9 +1740,9 @@ Dynamics::Dynamics(std::shared_ptr<dynobench::Model_robot> robot_model,
   dt = robot_model->ref_dt;
 
   if (control_mode == Control_Mode::default_mode) {
-    state_croco = boost::make_shared<StateCrocoDyno>(robot_model->state);
+    state_croco = std::make_shared<StateCrocoDyno>(robot_model->state);
   } else if (control_mode == Control_Mode::free_time) {
-    state_croco = boost::make_shared<StateCrocoDyno>(robot_model->state);
+    state_croco = std::make_shared<StateCrocoDyno>(robot_model->state);
     nu++;
     __v.resize(nx);
   } else if (control_mode == Control_Mode::free_time_linear) {
@@ -1751,7 +1751,7 @@ Dynamics::Dynamics(std::shared_ptr<dynobench::Model_robot> robot_model,
     nu++;
     nx++;
 
-    state_croco = boost::make_shared<StateCrocoDyno>(
+    state_croco = std::make_shared<StateCrocoDyno>(
         std::make_shared<dynobench::CompoundState2>(
             robot_model->state, std::make_shared<dynobench::Rn>(1)));
 
@@ -1761,7 +1761,7 @@ Dynamics::Dynamics(std::shared_ptr<dynobench::Model_robot> robot_model,
     nu++;
     nx++;
 
-    state_croco = boost::make_shared<StateCrocoDyno>(
+    state_croco = std::make_shared<StateCrocoDyno>(
         std::make_shared<dynobench::CompoundState2>(
             robot_model->state, std::make_shared<dynobench::Rn>(1)));
   }

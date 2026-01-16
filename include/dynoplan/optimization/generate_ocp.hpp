@@ -12,8 +12,8 @@ namespace dynoplan {
 
 template <typename Derived>
 std::shared_ptr<crocoddyl::ActionModelAbstract>
-to_am_base(boost::shared_ptr<Derived> am) {
-  return boost::static_pointer_cast<crocoddyl::ActionModelAbstract>(am);
+to_am_base(std::shared_ptr<Derived> am) {
+  return std::static_pointer_cast<crocoddyl::ActionModelAbstract>(am);
 };
 
 struct Generate_params {

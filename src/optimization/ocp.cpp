@@ -11,7 +11,7 @@
 
 #include "dynobench/general_utils.hpp"
 #include "dynobench/joint_robot.hpp"
-#include "dynobench/quadrotor_payload_n.hpp"
+// #include "dynobench/quadrotor_payload_n.hpp"  // File does not exist
 #include "dynobench/robot_models.hpp"
 #include "dynoplan/optimization/croco_models.hpp"
 
@@ -334,8 +334,8 @@ void convert_traj_with_variable_time(const std::vector<Vxd> &xs,
                                      std::vector<Vxd> &xs_out,
                                      std::vector<Vxd> &us_out, const double &dt,
                                      const dynobench::StateDyno &state) {
-  DYNO_CHECK(xs.size(), AT);
-  DYNO_CHECK(us.size(), AT);
+  CHECK(xs.size(), AT);
+  CHECK(us.size(), AT);
   DYNO_CHECK_EQ(xs.size(), us.size() + 1, AT);
 
   size_t N = us.size();
@@ -816,8 +816,8 @@ void warmstart_mpcc(std::vector<Eigen::VectorXd> &xs_warmstart,
                     std::vector<Eigen::VectorXd> &us,
                     std::shared_ptr<dynobench::Model_robot> model_robot,
                     bool shift_repeat,
-                    boost::shared_ptr<dynobench::Interpolator> path,
-                    boost::shared_ptr<dynobench::Interpolator> path_u,
+                    std::shared_ptr<dynobench::Interpolator> path,
+                    std::shared_ptr<dynobench::Interpolator> path_u,
                     double dt, double max_alpha,
                     std::vector<Eigen::VectorXd> &xs_init,
                     std::vector<Eigen::VectorXd> &us_init) {
@@ -924,7 +924,7 @@ void solve_for_fixed_penalty(
     std::vector<Eigen::VectorXd> &xs_out, std::vector<Eigen::VectorXd> &us_out,
     std::shared_ptr<dynobench::Model_robot> model_robot,
     const dynobench::Problem &problem, const std::string folder_tmptraj,
-    bool store_iterations, boost::shared_ptr<CallVerboseDyno> callback_dyno) {
+    bool store_iterations, std::shared_ptr<CallVerboseDyno> callback_dyno) {
   // geneate problem
   ptr<crocoddyl::ShootingProblem> problem_croco =
       generate_problem(gen_args, options_trajopt_local);
@@ -2039,8 +2039,8 @@ void trajectory_optimization(const dynobench::Problem &problem,
       model_robot->ensure(s);
     }
   }
-  DYNO_CHECK(tmp_init_guess.actions.size(), AT);
-  DYNO_CHECK(tmp_init_guess.states.size(), AT);
+  CHECK(tmp_init_guess.actions.size(), AT);
+  CHECK(tmp_init_guess.states.size(), AT);
   DYNO_CHECK_EQ(tmp_init_guess.states.size(), tmp_init_guess.actions.size() + 1,
                 AT);
 
