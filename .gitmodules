@@ -1,6 +1,8 @@
 [submodule "dynobench"]
 	path = dynobench
-	url = git@github.com:quimortiz/dynobench
+	# url = git@github.com:quimortiz/dynobench
+	url = git@github.com:imngui/dynobench.git
+	branch = tmp-dev
 [submodule "deps/nigh"]
 	path = deps/nigh
 	url = https://github.com/UNC-Robotics/nigh.git
