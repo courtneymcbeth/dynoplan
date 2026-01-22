@@ -1665,15 +1665,41 @@ void idbrrt(const dynobench::Problem &problem,
 
   double delta_factor = .99;
   size_t it = 0;
+  const size_t max_iterations = 10;  // Limit iterations to prevent infinite loop
+  const double min_delta = 0.01;     // Don't reduce delta below this threshold
 
   Stopwatch watch;
   double accumulated_time_filtered = 0.0;
 
+  // Use overall timelimit for the entire idbrrt process
+  double overall_timelimit = options_dbrrt.timelimit;
+
   while (!finished) {
+    // Check termination conditions
+    if (it >= max_iterations) {
+      std::cout << "idbrrt: Maximum iterations (" << max_iterations << ") reached" << std::endl;
+      break;
+    }
+    if (watch.elapsed_ms() > overall_timelimit) {
+      std::cout << "idbrrt: Overall time limit reached" << std::endl;
+      break;
+    }
+    if (options_dbrrt_local.delta < min_delta) {
+      std::cout << "idbrrt: Delta threshold (" << min_delta << ") reached" << std::endl;
+      break;
+    }
+
     if (it > 0) {
       options_dbrrt_local.delta *= delta_factor;
       options_dbrrt_local.goal_region *= delta_factor;
     }
+
+    // Adjust timelimit for this iteration based on remaining time
+    double remaining_time = overall_timelimit - watch.elapsed_ms();
+    if (remaining_time <= 0) {
+      break;
+    }
+    options_dbrrt_local.timelimit = std::min(options_dbrrt_local.timelimit, remaining_time);
 
     dynobench::Info_out info_out_local;
     dynobench::Trajectory traj_dbrrt;
@@ -1714,6 +1740,11 @@ void idbrrt(const dynobench::Problem &problem,
     }
 
     it++;
+  }
+
+  // Set info_out.solved = false if we didn't find a solution
+  if (!finished) {
+    info_out.solved = false;
   }
 }
 
