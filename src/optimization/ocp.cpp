@@ -595,9 +595,7 @@ void write_states_controls(const std::vector<Eigen::VectorXd> &xs,
   std::ofstream init_guess(filename);
   CSTR_(filename);
 
-  std::cout << "Check traj in controls " << std::endl;
-  __traj.check(model_robot, true);
-  std::cout << "Check traj in controls -- DONE " << std::endl;
+  __traj.check(model_robot, false);
   __traj.to_yaml_format(init_guess);
 }
 
@@ -1052,11 +1050,7 @@ void __trajectory_optimization(
     dynobench::Trajectory __init_guess = init_guess;
     __init_guess.start = problem.start;
     __init_guess.goal = problem.goal;
-    std::cout << "checking traj input of __trajectory_optimization "
-              << std::endl;
-    __init_guess.check(model_robot, true);
-    std::cout << "checking traj input of __trajectory_optimization -- DONE "
-              << std::endl;
+    __init_guess.check(model_robot, false);
   }
 
   size_t ddp_iterations = 0;
@@ -1682,8 +1676,8 @@ void __trajectory_optimization(
       traj.actions.at(i) = us_out.at(i).head(model_robot->nu);
     traj.start = problem.start;
     traj.goal = problem.goal;
-    traj.check(model_robot, true);
-    traj.update_feasibility(dynobench::Feasibility_thresholds(), true);
+    traj.check(model_robot, false);
+    traj.update_feasibility(dynobench::Feasibility_thresholds(), false);
     success = traj.feasible;
 
   } else if (solver == SOLVER::traj_opt || __free_time_mode) {
@@ -1764,10 +1758,8 @@ void __trajectory_optimization(
                         _us_out.at(i - 1).tail<1>()(0) * model_robot->ref_dt;
     }
 
-    std::cout << "CHECK traj with non uniform time " << std::endl;
-    traj.check(model_robot, true);
-    traj.update_feasibility(dynobench::Feasibility_thresholds(), true);
-    std::cout << "CHECK traj with non uniform time -- DONE " << std::endl;
+    traj.check(model_robot, false);
+    traj.update_feasibility(dynobench::Feasibility_thresholds(), false);
 
     success = traj.feasible;
 
@@ -1781,10 +1773,9 @@ void __trajectory_optimization(
         model_robot->ensure(s);
       }
 
-      std::cout << "check traj after resample " << std::endl;
-      traj_resample.check(model_robot, true);
+      traj_resample.check(model_robot, false);
       traj_resample.update_feasibility(dynobench::Feasibility_thresholds(),
-                                       true);
+                                       false);
 
       xs_out = traj_resample.states;
       us_out = traj_resample.actions;
@@ -1898,8 +1889,7 @@ void __trajectory_optimization(
     std::cout << "Final CHECK" << std::endl;
     CSTR_(model_robot->name);
 
-    traj.check(model_robot, true);
-    std::cout << "Final CHECK -- DONE" << std::endl;
+    traj.check(model_robot, false);
 
     dynobench::Feasibility_thresholds thresholds{.traj_tol = traj_tol,
                                                  .goal_tol = goal_tol,
@@ -2025,9 +2015,7 @@ void trajectory_optimization(const dynobench::Problem &problem,
     std::cout << "i have time stamps, I resample the trajectory" << std::endl;
 
     {
-      std::cout << "check for input" << std::endl;
-      Trajectory(init_guess).check(model_robot, true);
-      std::cout << "check for input -- DONE" << std::endl;
+      Trajectory(init_guess).check(model_robot, false);
     }
 
     resample_trajectory(tmp_init_guess.states, tmp_init_guess.actions,
@@ -2046,11 +2034,9 @@ void trajectory_optimization(const dynobench::Problem &problem,
 
   // check the init guess trajectory
 
-  std::cout << "Report on the init guess " << std::endl;
   WARN_WITH_INFO("should I copy the first state in the init guess? -- now yes");
   tmp_init_guess.start = problem.start;
-  tmp_init_guess.check(model_robot, true);
-  std::cout << "Report on the init guess -- DONE " << std::endl;
+  tmp_init_guess.check(model_robot, false);
 
   switch (static_cast<SOLVER>(options_trajopt.solver_id)) {
 

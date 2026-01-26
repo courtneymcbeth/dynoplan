@@ -348,9 +348,11 @@ void dbrrtConnect(const dynobench::Problem &problem,
 
   const bool debug_extra = false; // set to true for extra debug output
 
-  std::cout << "options dbrrt" << std::endl;
-  options_dbrrt.print(std::cout);
-  std::cout << "***" << std::endl;
+  if (options_dbrrt.verbose) {
+    std::cout << "options dbrrt" << std::endl;
+    options_dbrrt.print(std::cout);
+    std::cout << "***" << std::endl;
+  }
 
   const int nx = robot->nx;
 
@@ -364,12 +366,17 @@ void dbrrtConnect(const dynobench::Problem &problem,
 
   DYNO_CHECK_EQ(motions.at(0).traj.states.front().size(), nx, AT);
 
-  std::cout << "example motions " << std::endl;
-  assert(motions.size());
-  assert(motions_rev.size());
-  motions.front().traj.to_yaml_format(std::cout);
-  motions_rev.front().traj.to_yaml_format(std::cout);
-  std::cout << "DONE " << std::endl;
+  if (options_dbrrt.verbose) {
+    std::cout << "example motions " << std::endl;
+    assert(motions.size());
+    assert(motions_rev.size());
+    motions.front().traj.to_yaml_format(std::cout);
+    motions_rev.front().traj.to_yaml_format(std::cout);
+    std::cout << "DONE " << std::endl;
+  } else {
+    assert(motions.size());
+    assert(motions_rev.size());
+  }
 
   Time_benchmark time_bench;
   ompl::NearestNeighbors<Motion *> *T_m = nullptr;
@@ -430,8 +437,10 @@ void dbrrtConnect(const dynobench::Problem &problem,
 
   Eigen::VectorXd x(nx);
 
-  CSTR_V(robot->x_lb);
-  CSTR_V(robot->x_ub);
+  if (options_dbrrt.verbose) {
+    CSTR_V(robot->x_lb);
+    CSTR_V(robot->x_ub);
+  }
 
   Motion fakeMotion;
   fakeMotion.idx = -1;
@@ -487,9 +496,11 @@ void dbrrtConnect(const dynobench::Problem &problem,
   const size_t print_every = 1000;
 
   auto print_search_status = [&] {
-    std::cout << "expands: " << time_bench.expands
-              << " best distance: " << best_distance_to_goal
-              << " cost bound: " << cost_bound << std::endl;
+    if (options_dbrrt.verbose) {
+      std::cout << "expands: " << time_bench.expands
+                << " best distance: " << best_distance_to_goal
+                << " cost bound: " << cost_bound << std::endl;
+    }
   };
 
   Stopwatch watch;
@@ -497,14 +508,17 @@ void dbrrtConnect(const dynobench::Problem &problem,
   auto stop_search = [&] {
     if (static_cast<size_t>(time_bench.expands) >= options_dbrrt.max_expands) {
       status = Terminate_status::MAX_EXPANDS;
-      std::cout << "BREAK search:" << "MAX_EXPANDS" << std::endl;
-
+      if (options_dbrrt.verbose) {
+        std::cout << "BREAK search:" << "MAX_EXPANDS" << std::endl;
+      }
       return true;
     }
 
     if (watch.elapsed_ms() > options_dbrrt.timelimit) {
       status = Terminate_status::MAX_TIME;
-      std::cout << "BREAK search:" << "MAX_TIME" << std::endl;
+      if (options_dbrrt.verbose) {
+        std::cout << "BREAK search:" << "MAX_TIME" << std::endl;
+      }
       return true;
     }
     return false;
@@ -698,7 +712,9 @@ void dbrrtConnect(const dynobench::Problem &problem,
       double di = robot->distance(tmp->state_eig, new_node->state_eig);
 
       if (di < options_dbrrt.goal_region) {
-        std::cout << "we have connected the trees!" << std::endl;
+        if (options_dbrrt.verbose) {
+          std::cout << "we have connected the trees!" << std::endl;
+        }
 
         if (expand_forward) {
           solution_fwd = new_node;
@@ -711,13 +727,17 @@ void dbrrtConnect(const dynobench::Problem &problem,
         status = Terminate_status::SOLVED_RAW;
 
         info_out.solved_raw = true;
-        std::cout << "success! GOAL_REACHED" << std::endl;
-        std::cout << "node fwd " << solution_fwd->state_eig.format(FMT)
-                  << std::endl;
-        std::cout << "node bwd " << solution_bwd->state_eig.format(FMT)
-                  << std::endl;
+        if (options_dbrrt.verbose) {
+          std::cout << "success! GOAL_REACHED" << std::endl;
+          std::cout << "node fwd " << solution_fwd->state_eig.format(FMT)
+                    << std::endl;
+          std::cout << "node bwd " << solution_bwd->state_eig.format(FMT)
+                    << std::endl;
+        }
         status = Terminate_status::SOLVED_RAW;
-        std::cout << "breaking search" << std::endl;
+        if (options_dbrrt.verbose) {
+          std::cout << "breaking search" << std::endl;
+        }
         break;
         // TODO: dont write to much to file!!
       }
@@ -731,25 +751,29 @@ void dbrrtConnect(const dynobench::Problem &problem,
   time_bench.time_search = watch.elapsed_ms();
   time_bench.time_nearestMotion +=
       expander.time_in_nn + expander_rev.time_in_nn;
-  std::cout << "expander.time_in_nn: " << expander.time_in_nn << std::endl;
-  std::cout << "expander_rev.time_in_nn: " << expander_rev.time_in_nn
-            << std::endl;
+  if (options_dbrrt.verbose) {
+    std::cout << "expander.time_in_nn: " << expander.time_in_nn << std::endl;
+    std::cout << "expander_rev.time_in_nn: " << expander_rev.time_in_nn
+              << std::endl;
 
-  std::cout << "Terminate status: " << static_cast<int>(status) << " "
-            << terminate_status_str[static_cast<int>(status)] << std::endl;
-  std::cout << "solved_raw: " << (solution_bwd && solution_fwd != nullptr)
-            << std::endl;
-  std::cout << "solved_opt:" << bool(info_out.trajs_opt.size()) << std::endl;
-  std::cout << "TIME in search:" << time_bench.time_search << std::endl;
-  std::cout << "sizeTN: " << T_n->size() << std::endl;
-  std::cout << "sizeTN_rev: " << T_nrev->size() << std::endl;
+    std::cout << "Terminate status: " << static_cast<int>(status) << " "
+              << terminate_status_str[static_cast<int>(status)] << std::endl;
+    std::cout << "solved_raw: " << (solution_bwd && solution_fwd != nullptr)
+              << std::endl;
+    std::cout << "solved_opt:" << bool(info_out.trajs_opt.size()) << std::endl;
+    std::cout << "TIME in search:" << time_bench.time_search << std::endl;
+    std::cout << "sizeTN: " << T_n->size() << std::endl;
+    std::cout << "sizeTN_rev: " << T_nrev->size() << std::endl;
 
-  std::cout << "time_bench:" << std::endl;
-  time_bench.write(std::cout);
+    std::cout << "time_bench:" << std::endl;
+    time_bench.write(std::cout);
+  }
 
   if (solution_bwd && solution_fwd) {
-    std::cout << "SOLVED: cost: " << solution_fwd->gScore + solution_bwd->gScore
-              << std::endl;
+    if (options_dbrrt.verbose) {
+      std::cout << "SOLVED: cost: " << solution_fwd->gScore + solution_bwd->gScore
+                << std::endl;
+    }
 
     std::unique_ptr<std::ofstream> file_debug_ptr = nullptr;
 
@@ -765,18 +789,24 @@ void dbrrtConnect(const dynobench::Problem &problem,
         file_debug_ptr ? file_debug_ptr.get() : nullptr);
 
   } else {
-    std::cout << "NOT SOLVED" << std::endl;
+    if (options_dbrrt.verbose) {
+      std::cout << "NOT SOLVED" << std::endl;
+    }
     nearest_state_timed(goal_node, tmp, T_n, time_bench);
 
-    std::cout << "Close distance T_n to goal: "
-              << robot->distance(goal_node->getStateEig(), tmp->getStateEig())
-              << std::endl;
+    if (options_dbrrt.verbose) {
+      std::cout << "Close distance T_n to goal: "
+                << robot->distance(goal_node->getStateEig(), tmp->getStateEig())
+                << std::endl;
+    }
 
     nearest_state_timed(start_node, tmp, T_nrev, time_bench);
 
-    std::cout << "Close distance T_nrev to start: "
-              << robot->distance(start_node->getStateEig(), tmp->getStateEig())
-              << std::endl;
+    if (options_dbrrt.verbose) {
+      std::cout << "Close distance T_nrev to start: "
+                << robot->distance(start_node->getStateEig(), tmp->getStateEig())
+                << std::endl;
+    }
 
     // tree vs tree
     DYNO_CHECK_EQ(nodes_in_Tn.size(), T_n->size(), AT);
@@ -798,15 +828,17 @@ void dbrrtConnect(const dynobench::Problem &problem,
       }
     }
     assert(best_index >= 0);
-    std::cout << "nearest pair is " << std::endl;
+    if (options_dbrrt.verbose) {
+      std::cout << "nearest pair is " << std::endl;
 
-    std::cout << "FWD" << std::endl;
-    nodes_in_Tn.at(best_index)->write(std::cout);
+      std::cout << "FWD" << std::endl;
+      nodes_in_Tn.at(best_index)->write(std::cout);
 
-    std::cout << "BWD" << std::endl;
-    nn.at(best_index)->write(std::cout);
+      std::cout << "BWD" << std::endl;
+      nn.at(best_index)->write(std::cout);
 
-    std::cout << "distance: " << min_dist << std::endl;
+      std::cout << "distance: " << min_dist << std::endl;
+    }
   }
 
   if (options_dbrrt.debug) {
@@ -886,10 +918,12 @@ void dbrrtConnect(const dynobench::Problem &problem,
   time_bench.write(out);
 
   if (info_out.solved_raw) {
-    std::cout << "WARNING: for feasibility check, I use the MAX of goal_region "
-                 "and delta:"
-              << std::max(options_dbrrt.goal_region, options_dbrrt.delta)
-              << std::endl;
+    if (options_dbrrt.verbose) {
+      std::cout << "WARNING: for feasibility check, I use the MAX of goal_region "
+                   "and delta:"
+                << std::max(options_dbrrt.goal_region, options_dbrrt.delta)
+                << std::endl;
+    }
     dynobench::Feasibility_thresholds thresholds;
     thresholds.col_tol =
         5 * 1e-2; // NOTE: for the systems with 0.01 s integration step,
@@ -899,12 +933,14 @@ void dbrrtConnect(const dynobench::Problem &problem,
         std::max(options_dbrrt.goal_region, options_dbrrt.delta);
     thresholds.traj_tol =
         std::max(options_dbrrt.goal_region, options_dbrrt.delta);
-    traj_out.update_feasibility(thresholds, true);
+    traj_out.update_feasibility(thresholds, false);
     // Sanity check that trajectory is actually feasible!!
     CHECK(traj_out.feasible, "");
   }
 
-  std::cout << "warning: update the trajecotries cost" << std::endl;
+  if (options_dbrrt.verbose) {
+    std::cout << "warning: update the trajecotries cost" << std::endl;
+  }
   std::for_each(
       info_out.trajs_raw.begin(), info_out.trajs_raw.end(),
       [&](auto &traj) { traj.cost = robot->ref_dt * traj.actions.size(); });
@@ -923,9 +959,11 @@ void dbrrt(const dynobench::Problem &problem,
            const Options_trajopt &options_trajopt,
            dynobench::Trajectory &traj_out, dynobench::Info_out &info_out) {
 
-  std::cout << "options dbrrt" << std::endl;
-  options_dbrrt.print(std::cout);
-  std::cout << "***" << std::endl;
+  if (options_dbrrt.verbose) {
+    std::cout << "options dbrrt" << std::endl;
+    options_dbrrt.print(std::cout);
+    std::cout << "***" << std::endl;
+  }
 
   std::vector<Motion> &motions = *options_dbrrt.motions_ptr;
   CHECK(options_dbrrt.motions_ptr, AT);
@@ -976,8 +1014,10 @@ void dbrrt(const dynobench::Problem &problem,
 
   Eigen::VectorXd x(robot->nx);
 
-  CSTR_V(robot->x_lb);
-  CSTR_V(robot->x_ub);
+  if (options_dbrrt.verbose) {
+    CSTR_V(robot->x_lb);
+    CSTR_V(robot->x_ub);
+  }
 
   Motion fakeMotion;
   fakeMotion.idx = -1;
@@ -1049,14 +1089,17 @@ void dbrrt(const dynobench::Problem &problem,
   auto stop_search = [&] {
     if (static_cast<size_t>(time_bench.expands) >= options_dbrrt.max_expands) {
       status = Terminate_status::MAX_EXPANDS;
-      std::cout << "BREAK search:" << "MAX_EXPANDS" << std::endl;
-
+      if (options_dbrrt.verbose) {
+        std::cout << "BREAK search:" << "MAX_EXPANDS" << std::endl;
+      }
       return true;
     }
 
     if (watch.elapsed_ms() > options_dbrrt.timelimit) {
       status = Terminate_status::MAX_TIME;
-      std::cout << "BREAK search:" << "MAX_TIME" << std::endl;
+      if (options_dbrrt.verbose) {
+        std::cout << "BREAK search:" << "MAX_TIME" << std::endl;
+      }
       return true;
     }
     return false;
@@ -1066,7 +1109,7 @@ void dbrrt(const dynobench::Problem &problem,
 
   while (!stop_search()) {
 
-    if (time_bench.expands % 500 == 0) {
+    if (options_dbrrt.verbose && time_bench.expands % 500 == 0) {
       std::cout << "expands: " << time_bench.expands
                 << " best distance: " << best_distance_to_goal
                 << " cost bound: " << cost_bound << std::endl;
@@ -1116,8 +1159,10 @@ void dbrrt(const dynobench::Problem &problem,
     if (options_dbrrt.ao_rrt &&
         near_node->gScore + near_node->hScore >
             options_dbrrt.best_cost_prune_factor * cost_bound) {
-      std::cout << "warning! " << "cost of near is above bound -- "
-                << near_node->gScore << " " << cost_bound << std::endl;
+      if (options_dbrrt.verbose) {
+        std::cout << "warning! " << "cost of near is above bound -- "
+                  << near_node->gScore << " " << cost_bound << std::endl;
+      }
       continue;
     }
 
@@ -1163,7 +1208,7 @@ void dbrrt(const dynobench::Problem &problem,
 #if 1
       check_goal(*robot, aux, problem.goal, traj_wrapper,
                  options_dbrrt.goal_region, 4, chosen_index);
-      if (chosen_index != -1) {
+      if (chosen_index != -1 && options_dbrrt.verbose) {
         std::cout << "warning: intermediate state in goal region" << std::endl;
       }
 #endif
@@ -1246,10 +1291,12 @@ void dbrrt(const dynobench::Problem &problem,
             delete new_node;
             continue;
           }
-          std::cout << "but adding "
-                       "because best "
-                       "cost! -- "
-                    << new_node->gScore << " " << tmp->gScore << std::endl;
+          if (options_dbrrt.verbose) {
+            std::cout << "but adding "
+                         "because best "
+                         "cost! -- "
+                      << new_node->gScore << " " << tmp->gScore << std::endl;
+          }
           // TODO: should I
           // rewire the tree?
 
@@ -1291,11 +1338,15 @@ void dbrrt(const dynobench::Problem &problem,
         status = Terminate_status::SOLVED_RAW;
         all_solutions_raw.push_back(solution);
 
-        CSTR_V(new_node->state_eig);
+        if (options_dbrrt.verbose) {
+          CSTR_V(new_node->state_eig);
+        }
         info_out.solved_raw = true;
-        std::cout << "success! "
-                     "GOAL_REACHED"
-                  << std::endl;
+        if (options_dbrrt.verbose) {
+          std::cout << "success! "
+                       "GOAL_REACHED"
+                    << std::endl;
+        }
 
         // TODO: dont write to
         // much to file!!
@@ -1341,11 +1392,13 @@ void dbrrt(const dynobench::Problem &problem,
                                   ".yaml");
 
           if (result.feasible == 1) {
-            std::cout << "success: "
-                         "optimization"
-                         " is "
-                         "feasible!"
-                      << std::endl;
+            if (options_dbrrt.verbose) {
+              std::cout << "success: "
+                           "optimization"
+                           " is "
+                           "feasible!"
+                        << std::endl;
+            }
             info_out.solved = true;
 
             if (result.cost < best_cost_opt) {
@@ -1389,10 +1442,12 @@ void dbrrt(const dynobench::Problem &problem,
                 motion_out.traj = traj;
                 motion_out.cost = traj.cost;
                 motion_out.idx = motions.size() + motions_out.size();
-                std::cout << "cost of "
-                             "motion "
-                             "is "
-                          << motion_out.cost << std::endl;
+                if (options_dbrrt.verbose) {
+                  std::cout << "cost of "
+                               "motion "
+                               "is "
+                            << motion_out.cost << std::endl;
+                }
                 motions_out.push_back(std::move(motion_out));
               }
 
@@ -1400,14 +1455,16 @@ void dbrrt(const dynobench::Problem &problem,
                              std::make_move_iterator(motions_out.begin()),
                              std::make_move_iterator(motions_out.end()));
 
-              std::cout << "Afer "
-                           "insert "
-                        << motions.size() << std::endl;
-              std::cout << "Warning: "
-                        << "I am "
-                           "inserting "
-                           "at the end"
-                        << std::endl;
+              if (options_dbrrt.verbose) {
+                std::cout << "Afer "
+                             "insert "
+                          << motions.size() << std::endl;
+                std::cout << "Warning: "
+                          << "I am "
+                             "inserting "
+                             "at the end"
+                          << std::endl;
+              }
 
               T_m->clear();
 
@@ -1415,12 +1472,14 @@ void dbrrt(const dynobench::Problem &problem,
                 T_m->add(&m);
               }
 
-              std::cout << "TODO: "
-                           "insert "
-                           "also the "
-                           "nodes in "
-                           "the tree"
-                        << std::endl;
+              if (options_dbrrt.verbose) {
+                std::cout << "TODO: "
+                             "insert "
+                             "also the "
+                             "nodes in "
+                             "the tree"
+                          << std::endl;
+              }
             }
 
             if (options_dbrrt.add_to_search_tree) {
@@ -1429,10 +1488,12 @@ void dbrrt(const dynobench::Problem &problem,
             }
 
           } else {
-            std::cout << "warning: "
-                         "optimization"
-                         " failed"
-                      << std::endl;
+            if (options_dbrrt.verbose) {
+              std::cout << "warning: "
+                           "optimization"
+                           " failed"
+                        << std::endl;
+            }
           }
         }
 
@@ -1442,17 +1503,21 @@ void dbrrt(const dynobench::Problem &problem,
             break;
           }
         } else {
-          std::cout << "warning"
-                    << "i am pruning "
-                       "with cost of "
-                       "raw solution"
-                    << std::endl;
+          if (options_dbrrt.verbose) {
+            std::cout << "warning"
+                      << "i am pruning "
+                         "with cost of "
+                         "raw solution"
+                      << std::endl;
+          }
           DYNO_CHECK_LEQ(new_node->gScore, cost_bound, AT);
           cost_bound = new_node->gScore;
           solution = new_node;
-          std::cout << "New solution "
-                       "found! Cost "
-                    << cost_bound << std::endl;
+          if (options_dbrrt.verbose) {
+            std::cout << "New solution "
+                         "found! Cost "
+                      << cost_bound << std::endl;
+          }
 
           if (options_dbrrt.ao_rrt_rebuild_tree) {
 
@@ -1471,10 +1536,12 @@ void dbrrt(const dynobench::Problem &problem,
             }
 
             T_n->clear();
-            std::cout << "Tree size "
-                         "before "
-                         "prunning "
-                      << T_n->size() << std::endl;
+            if (options_dbrrt.verbose) {
+              std::cout << "Tree size "
+                           "before "
+                           "prunning "
+                        << T_n->size() << std::endl;
+            }
             for (auto &n : discovered_nodes) {
               if (n->gScore + n->hScore <=
                   options_dbrrt.best_cost_prune_factor * cost_bound) {
@@ -1482,9 +1549,11 @@ void dbrrt(const dynobench::Problem &problem,
                 add_state_timed(n, T_n, time_bench);
               }
             }
-            std::cout << "Tree after "
-                         "prunning "
-                      << T_n->size() << std::endl;
+            if (options_dbrrt.verbose) {
+              std::cout << "Tree after "
+                           "prunning "
+                        << T_n->size() << std::endl;
+            }
 
             if (options_dbrrt.debug) {
               std::vector<AStarNode *> active_nodes;
@@ -1517,24 +1586,26 @@ void dbrrt(const dynobench::Problem &problem,
   info_out.data.insert(
       std::make_pair("time_search", std::to_string(time_bench.time_search)));
 
-  std::cout << "Terminate status: " << static_cast<int>(status) << " "
-            << terminate_status_str[static_cast<int>(status)] << std::endl;
-  std::cout << "solved_raw: " << (solution != nullptr) << std::endl;
-  std::cout << "solved_opt:" << bool(info_out.trajs_opt.size()) << std::endl;
-  std::cout << "TIME in search:" << time_bench.time_search << std::endl;
-  std::cout << "sizeTN: " << T_n->size() << std::endl;
+  if (options_dbrrt.verbose) {
+    std::cout << "Terminate status: " << static_cast<int>(status) << " "
+              << terminate_status_str[static_cast<int>(status)] << std::endl;
+    std::cout << "solved_raw: " << (solution != nullptr) << std::endl;
+    std::cout << "solved_opt:" << bool(info_out.trajs_opt.size()) << std::endl;
+    std::cout << "TIME in search:" << time_bench.time_search << std::endl;
+    std::cout << "sizeTN: " << T_n->size() << std::endl;
 
-  if (solution) {
-    std::cout << "cost: " << solution->gScore << std::endl;
-  } else {
-    std::cout << "Close distance: " << best_distance_to_goal << std::endl;
+    if (solution) {
+      std::cout << "cost: " << solution->gScore << std::endl;
+    } else {
+      std::cout << "Close distance: " << best_distance_to_goal << std::endl;
+    }
+
+    std::cout << "best node: " << std::endl;
+    best_node->write(std::cout);
+
+    std::cout << "time_bench:" << std::endl;
+    time_bench.write(std::cout);
   }
-
-  std::cout << "best node: " << std::endl;
-  best_node->write(std::cout);
-
-  std::cout << "time_bench:" << std::endl;
-  time_bench.write(std::cout);
 
   if (options_dbrrt.debug) {
     std::ofstream debug_file("debug.yaml");
@@ -1605,14 +1676,18 @@ void dbrrt(const dynobench::Problem &problem,
                              std::to_string(i) + ".yaml";
 
       create_dir_if_necessary(filename);
-      std::cout << "writing to " << filename << std::endl;
+      if (options_dbrrt.verbose) {
+        std::cout << "writing to " << filename << std::endl;
+      }
       std::ofstream out(filename);
       from_solution_to_yaml_and_traj(*robot, motions, all_solutions_raw.at(i),
                                      problem, trajs_out.at(i), &out);
       std::string filename2 = "/tmp/dynoplan/"
                               "dbrrt-" +
                               std::to_string(i) + ".traj.yaml";
-      std::cout << "writing to " << filename2 << std::endl;
+      if (options_dbrrt.verbose) {
+        std::cout << "writing to " << filename2 << std::endl;
+      }
       std::ofstream out2(filename2);
       create_dir_if_necessary(filename2);
       trajs_out.at(i).to_yaml_format(out2);
@@ -1625,7 +1700,9 @@ void dbrrt(const dynobench::Problem &problem,
     CHECK(info_out.solved_raw, AT);
   }
 
-  std::cout << "warning: update the trajecotries cost" << std::endl;
+  if (options_dbrrt.verbose) {
+    std::cout << "warning: update the trajecotries cost" << std::endl;
+  }
   std::for_each(
       info_out.trajs_raw.begin(), info_out.trajs_raw.end(),
       [&](auto &traj) { traj.cost = robot->ref_dt * traj.actions.size(); });

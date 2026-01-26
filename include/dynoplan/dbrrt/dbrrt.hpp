@@ -25,6 +25,7 @@ struct Options_dbrrt {
   double cost_bound = 200;
   double goal_bias = .1;
   bool debug = false;
+  bool verbose = true; // print search progress and status messages
   bool new_invariance = true;
   double delta = .3;
   int max_expands = 10000;
@@ -62,6 +63,7 @@ struct Options_dbrrt {
     loader.set(VAR_WITH_NAME(choose_first_motion_valid));
     loader.set(VAR_WITH_NAME(goal_region));
     loader.set(VAR_WITH_NAME(debug));
+    loader.set(VAR_WITH_NAME(verbose));
     loader.set(VAR_WITH_NAME(new_invariance));
     loader.set(VAR_WITH_NAME(timelimit));
     loader.set(VAR_WITH_NAME(max_expands));

@@ -1015,7 +1015,7 @@ void dbastar(const dynobench::Problem &problem, Options_dbastar options_dbastar,
                                  &out);
   traj_out.start = problem.start;
   traj_out.goal = problem.goal;
-  traj_out.check(robot, true);
+  traj_out.check(robot, false);
   traj_out.cost = traj_out.actions.size() * robot->ref_dt;
 
   if (status == Terminate_status::SOLVED) {
@@ -1026,12 +1026,12 @@ void dbastar(const dynobench::Problem &problem, Options_dbastar options_dbastar,
     // use a slightly sparse temporal collision check for systems with dt=0.01.
     thresholds.goal_tol = options_dbastar.delta;
     thresholds.traj_tol = options_dbastar.delta;
-    traj_out.update_feasibility(thresholds, true);
+    traj_out.update_feasibility(thresholds, false);
     CHECK(traj_out.feasible, "");
   }
 
   // Update the feasibility informatino of the trajectory
-  traj_out.update_feasibility(dynobench::Feasibility_thresholds(), true);
+  traj_out.update_feasibility(dynobench::Feasibility_thresholds(), false);
 
   {
     std::string filename_id =
