@@ -37,8 +37,8 @@ message(STATUS "FCL_VERSION: ${FCL_VERSION}")
 message(STATUS "Finding LZ4 libraries...")
 find_library(
   LZ4_LIBRARIES
-  NAMES liblz4.so
-  HINTS "lz4/lib")
+  NAMES lz4 liblz4.so liblz4.dylib
+  HINTS "lz4/lib" "/opt/homebrew/lib" "/usr/local/lib")
 if(LZ4_LIBRARIES)
   message(STATUS "Found: ${LZ4_LIBRARIES}")
 else()
@@ -251,7 +251,7 @@ target_link_libraries(
           fcl
           yaml-cpp
           Boost::program_options
-          Boost::serialization)
+          Boost::serialization libipopt.so)
 
 target_link_libraries(
   main_multirobot_optimization
@@ -262,7 +262,7 @@ target_link_libraries(
           fcl
           yaml-cpp
           Boost::program_options
-          Boost::serialization)
+          Boost::serialization libipopt.so)
 
 target_link_libraries(
   main_tdbastar

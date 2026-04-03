@@ -35,6 +35,8 @@ public:
       std::pair<std::vector<Eigen::VectorXd>, std::vector<Eigen::VectorXd>>;
   std::vector<Traj> trajs;
 
+  CROCODDYL_BASE_DERIVED_CAST(CallbackBase, CallVerboseDyno)
+
   explicit CallVerboseDyno() = default;
   ~CallVerboseDyno() override = default;
 
