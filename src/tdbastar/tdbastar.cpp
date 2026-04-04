@@ -845,7 +845,7 @@ void tdbastar(
         __node->is_in_open = true;
         __node->reaches_goal = reachesGoal;
         __node->arrivals.push_back(
-            {.gScore = gScore,
+            {.gScore = static_cast<float>(gScore),
              .came_from = best_node,
              .used_motion = lazy_traj.motion->idx,
              .arrival_idx = best_node->current_arrival_idx});

@@ -43,13 +43,7 @@ int main(int argc, char *argv[]) {
     std::cerr << desc << std::endl;
     return 1;
   }
-<<<<<<< HEAD
-  
-  execute_optimizationMultiRobot(envFile, initFile, outFile,
-                                 dynobench_base, sum_robots_cost);
-=======
 
   execute_optimizationMultiRobot(envFile, initFile, outFile, dynobench_base,
                                  sum_robots_cost);
->>>>>>> dc938a2ac7d6a699781e0bd80370f15b74b8b0eb
 }

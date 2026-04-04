@@ -436,7 +436,6 @@ BOOST_AUTO_TEST_CASE(t_hetero_random_2) {
 
   multi_out.to_yaml_format("/tmp/test_gen_p10_n2_1_hetero_solution.yaml");
 }
-<<<<<<< HEAD
 
 
 // needs to be debugged
@@ -514,7 +513,3 @@ BOOST_AUTO_TEST_CASE(t_gen_p10_n8_9_hetero) {
 
   multi_out.to_yaml_format("/tmp/test_gen_p10_n8_9_hetero_solution.yaml");
 }
-
-
-=======
->>>>>>> dc938a2ac7d6a699781e0bd80370f15b74b8b0eb

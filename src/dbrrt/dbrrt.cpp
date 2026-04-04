@@ -459,7 +459,7 @@ void dbrrtConnect(const dynobench::Problem &problem,
   if (options_dbrrt.seed >= 0) {
     expander.seed(options_dbrrt.seed);
     expander_rev.seed(options_dbrrt.seed);
-    g = std::mt19937{static_cast<size_t>(options_dbrrt.seed)};
+    g = std::mt19937{static_cast<uint32_t>(options_dbrrt.seed)};
     srand(options_dbrrt.seed);
   } else {
     srand(time(0));
@@ -1035,7 +1035,7 @@ void dbrrt(const dynobench::Problem &problem,
 
   if (options_dbrrt.seed >= 0) {
     expander.seed(options_dbrrt.seed);
-    gen = std::mt19937{static_cast<size_t>(options_dbrrt.seed)};
+    gen = std::mt19937{static_cast<uint32_t>(options_dbrrt.seed)};
     srand(options_dbrrt.seed);
   } else {
     srand(time(0));
