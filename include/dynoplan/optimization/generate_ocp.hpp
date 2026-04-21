@@ -34,6 +34,10 @@ struct Generate_params {
   bool goal_cost = true;
   bool collisions = true;
   double penalty = 1; // penalty for the constraints
+  // Region bounds: every state is penalized if outside ALL of these boxes.
+  // Applied uniformly at every OCP timestep.
+  std::vector<std::pair<Eigen::VectorXd, Eigen::VectorXd>> region_bounds = {};
+  double region_bounds_weight = 50.0;
   void print(std::ostream &out) const;
 };
 

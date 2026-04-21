@@ -102,6 +102,14 @@ generate_problem(const Generate_params &gen_args,
   //     !(options_trajopt.control_bounds &&
   //     options_trajopt.soft_control_bounds), AT);
 
+  // Pre-build region boxes (same set applied at every timestep).
+  std::vector<BoxRegion> prebuilt_regions;
+  if (!gen_args.region_bounds.empty()) {
+    for (const auto &[lb, ub] : gen_args.region_bounds) {
+      prebuilt_regions.push_back(BoxRegion{lb, ub});
+    }
+  }
+
   for (size_t t = 0; t < gen_args.N; t++) {
 
     std::vector<ptr<Cost>> feats_run;
@@ -396,6 +404,12 @@ generate_problem(const Generate_params &gen_args,
       }
 
       feats_run.push_back(mk<State_bounds>(nx, nu, nx, v, dyn->x_weightb));
+    }
+
+    if (!prebuilt_regions.empty()) {
+      size_t n_sp = static_cast<size_t>(prebuilt_regions.front().lb.size());
+      feats_run.push_back(mk<Region_bounds>(nx, nu,
+          prebuilt_regions, gen_args.region_bounds_weight, n_sp));
     }
 
     if (gen_args.contour_control) {

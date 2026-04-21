@@ -1000,6 +1000,61 @@ struct State_bounds : Cost {
                         const Eigen::Ref<const Eigen::VectorXd> &x) override;
 };
 
+struct BoxRegion {
+    Eigen::VectorXd lb;  // lower bound (position dims only, e.g. 2D: x,y)
+    Eigen::VectorXd ub;  // upper bound
+
+    // L∞ signed distance: negative inside region, positive outside.
+    // equivalent to: max_i( max(lb_i - x_i,  x_i - ub_i) )
+    double signed_distance(const Eigen::Ref<const Eigen::VectorXd>& x) const {
+        return (lb - x).cwiseMax(x - ub).maxCoeff();
+    }
+
+    // Gradient of signed distance w.r.t. x.
+    // For L∞ SDF: gradient is ±1 in the most-violated dimension, 0 elsewhere.
+    Eigen::VectorXd distance_gradient(const Eigen::Ref<const Eigen::VectorXd>& x) const {
+        Eigen::VectorXd q = (lb - x).cwiseMax(x - ub);
+        Eigen::Index idx;
+        q.maxCoeff(&idx);
+        Eigen::VectorXd grad = Eigen::VectorXd::Zero(x.size());
+        grad(idx) = (x(idx) > ub(idx)) ? 1.0 : -1.0;
+        return grad;
+    }
+};
+
+struct Region_bounds : Cost {
+    std::vector<BoxRegion> regions;  // corridor: robot must be in ≥1 at all times
+    double weight = 100.;
+    size_t nx_effective;             // position dims to check (e.g. 2 for x,y)
+    Eigen::MatrixXd Jx;             // 1 × nx Jacobian row (reused across calls)
+
+    Region_bounds(size_t nx, size_t nu,
+                  const std::vector<BoxRegion>& regions,
+                  double weight,
+                  size_t nx_effective);
+
+    virtual ~Region_bounds() = default;
+
+    virtual void calc(Eigen::Ref<Eigen::VectorXd> r,
+                      const Eigen::Ref<const Eigen::VectorXd>& x,
+                      const Eigen::Ref<const Eigen::VectorXd>& u) override;
+
+    virtual void calc(Eigen::Ref<Eigen::VectorXd> r,
+                      const Eigen::Ref<const Eigen::VectorXd>& x) override;
+
+    virtual void calcDiff(Eigen::Ref<Eigen::VectorXd> Lx,
+                          Eigen::Ref<Eigen::VectorXd> Lu,
+                          Eigen::Ref<Eigen::MatrixXd> Lxx,
+                          Eigen::Ref<Eigen::MatrixXd> Luu,
+                          Eigen::Ref<Eigen::MatrixXd> Lxu,
+                          const Eigen::Ref<const Eigen::VectorXd>& x,
+                          const Eigen::Ref<const Eigen::VectorXd>& u) override;
+
+    virtual void calcDiff(Eigen::Ref<Eigen::VectorXd> Lx,
+                          Eigen::Ref<Eigen::MatrixXd> Lxx,
+                          const Eigen::Ref<const Eigen::VectorXd>& x) override;
+};
+
 struct Control_bounds : Cost {
   // weight * ( x - ub ) <= 0
   //

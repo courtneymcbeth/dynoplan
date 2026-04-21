@@ -1182,6 +1182,7 @@ void dbrrt(const dynobench::Problem &problem,
 
     std::vector<LazyTraj> lazy_trajs;
 
+    // Sample motion primitives whose start state is within db
     expander.expand_lazy(near_node->state_eig, lazy_trajs);
 
     double min_distance = std::numeric_limits<double>::max();
@@ -1189,6 +1190,7 @@ void dbrrt(const dynobench::Problem &problem,
     dynobench::Trajectory chosen_traj_debug;
     LazyTraj chosen_lazy_traj;
 
+    // Evaluate the lazy trajectories
     int chosen_index = -1;
     for (size_t i = 0; i < lazy_trajs.size(); i++) {
 

@@ -262,7 +262,7 @@ ompl::NearestNeighbors<_T> *nigh_factory(
   auto &w = robot->diff_model->distance_weights;
   // CSTR_V(w);
 
-  if (startsWith(name, "unicycle1")) {
+  if (startsWith(name, "unicycle1") || startsWith(name, "unicycle_first_order_0")) {
 
     auto data_to_key = [robot, fun](_T const &m) {
       const ob::State *s = fun(m);
@@ -400,7 +400,7 @@ ompl::NearestNeighbors<_T> *nigh_factory2(
   auto &w = robot->distance_weights;
   // CSTR_V(w);
 
-  if (startsWith(name, "unicycle1")) {
+  if (startsWith(name, "unicycle1") || startsWith(name, "unicycle_first_order_0")) {
 
     if (cost_scale < 0) {
       auto data_to_key = [robot, fun](_T const &m) {
@@ -590,7 +590,7 @@ ompl::NearestNeighbors<_T> *nigh_factory_t(
   auto &w = robot->distance_weights;
   // CSTR_V(w);
 
-  if (startsWith(name, "unicycle1")) {
+  if (startsWith(name, "unicycle1") || startsWith(name, "unicycle_first_order_0")) {
 
     if (cost_scale < 0) {
       auto data_to_key = [robot, fun, reverse_search](_T const &m) {

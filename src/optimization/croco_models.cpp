@@ -10,6 +10,7 @@ using V2d = Eigen::Vector2d;
 using V3d = Eigen::Vector3d;
 using V4d = Eigen::Vector4d;
 using Vxd = Eigen::VectorXd;
+using MatXd = Eigen::MatrixXd;
 using V1d = Eigen::Matrix<double, 1, 1>;
 
 namespace dynoplan {
@@ -2060,6 +2061,62 @@ void Diff_angle_cost::calcDiff(Eigen::Ref<Eigen::VectorXd> Lx,
                                const Eigen::Ref<const Eigen::VectorXd> &x,
                                const Eigen::Ref<const Eigen::VectorXd> &u) {
   calcDiff(Lx, Lxx, x);
+}
+
+Region_bounds::Region_bounds(size_t nx, size_t nu,
+                             const std::vector<BoxRegion>& regions,
+                             double weight, size_t nx_effective)
+    : Cost(nx, nu, 1), regions(regions), weight(weight), nx_effective(nx_effective) {
+    name = "region_bounds";
+    Jx.resize(1, nx);
+    Jx.setZero();
+}
+
+void Region_bounds::calc(Eigen::Ref<Vxd> r,
+                         const Eigen::Ref<const Vxd>& x,
+                         const Eigen::Ref<const Vxd>& u) {
+    (void)u;
+    calc(r, x);
+}
+
+void Region_bounds::calc(Eigen::Ref<Vxd> r, const Eigen::Ref<const Vxd>& x) {
+    check_input_calc(r, x);
+    // Find the region the robot is most inside (minimum signed distance).
+    double min_d = std::numeric_limits<double>::max();
+    for (auto& reg : regions)
+        min_d = std::min(min_d, reg.signed_distance(x.head(nx_effective)));
+    // Hinge: zero if inside any region, positive if outside all.
+    r(0) = std::max(weight * min_d, 0.0);
+}
+
+void Region_bounds::calcDiff(Eigen::Ref<Vxd> Lx, Eigen::Ref<MatXd> Lxx,
+                             const Eigen::Ref<const Vxd>& x) {
+    check_input_calcDiff(Lx, Lxx, x);
+    Jx.setZero();
+    // Find the best region (smallest signed distance).
+    int best = 0;
+    double min_d = std::numeric_limits<double>::max();
+    for (int i = 0; i < (int)regions.size(); i++) {
+        double d = regions[i].signed_distance(x.head(nx_effective));
+        if (d < min_d) { min_d = d; best = i; }
+    }
+    double cost = weight * min_d;
+    if (cost > 0) {  // outside all regions — penalize
+        Eigen::VectorXd grad = weight * regions[best].distance_gradient(x.head(nx_effective));
+        Jx.block(0, 0, 1, nx_effective) = grad.transpose();
+        Lx  += cost * Jx.transpose();
+        Lxx += Jx.transpose() * Jx;
+    }
+}
+
+// (calcDiff with Lu/Luu/Lxu delegates to the state-only version)
+void Region_bounds::calcDiff(Eigen::Ref<Vxd> Lx, Eigen::Ref<Vxd> Lu,
+                             Eigen::Ref<MatXd> Lxx, Eigen::Ref<MatXd> Luu,
+                             Eigen::Ref<MatXd> Lxu,
+                             const Eigen::Ref<const Vxd>& x,
+                             const Eigen::Ref<const Vxd>& u) {
+    (void)Lu; (void)Luu; (void)Lxu; (void)u;
+    calcDiff(Lx, Lxx, x);
 }
 
 } // namespace dynoplan

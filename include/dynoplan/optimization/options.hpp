@@ -1,7 +1,10 @@
 #pragma once
 
+#include <Eigen/Core>
 #include <boost/program_options.hpp>
 #include <string>
+#include <utility>
+#include <vector>
 #include <yaml-cpp/node/node.h>
 
 namespace dynoplan {
@@ -52,6 +55,11 @@ struct Options_trajopt {
   bool welf_format = false;
   bool linear_search = false;
   std::string name = "";
+
+  // Region bounds: every state is penalized if outside ALL of these boxes.
+  // Applied uniformly at every OCP timestep.
+  std::vector<std::pair<Eigen::VectorXd, Eigen::VectorXd>> region_bounds = {};
+  double region_bounds_weight = 50.0;
 
   void add_options(po::options_description &desc);
 

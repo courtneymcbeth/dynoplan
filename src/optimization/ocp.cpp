@@ -1711,7 +1711,9 @@ void __trajectory_optimization(
         .states = {xs_init.begin(), xs_init.end() - 1},
         .states_weights = regs,
         .actions = us_init,
-        .collisions = options_trajopt_local.collision_weight > 1e-3
+        .collisions = options_trajopt_local.collision_weight > 1e-3,
+        .region_bounds        = options_trajopt_local.region_bounds,
+        .region_bounds_weight = options_trajopt_local.region_bounds_weight
 
     };
 
