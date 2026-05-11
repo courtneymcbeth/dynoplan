@@ -1025,6 +1025,7 @@ struct BoxRegion {
 struct Region_bounds : Cost {
     std::vector<BoxRegion> regions;  // corridor: robot must be in ≥1 at all times
     double weight = 100.;
+    double beta = 10.0;              // log-sum-exp sharpness: larger → closer to true min
     size_t nx_effective;             // position dims to check (e.g. 2 for x,y)
     Eigen::MatrixXd Jx;             // 1 × nx Jacobian row (reused across calls)
 

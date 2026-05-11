@@ -2068,6 +2068,7 @@ Region_bounds::Region_bounds(size_t nx, size_t nu,
                              double weight, size_t nx_effective)
     : Cost(nx, nu, 1), regions(regions), weight(weight), nx_effective(nx_effective) {
     name = "region_bounds";
+    cost_type = CostTYPE::linear;  // r(0) already holds the scalar cost; no squaring
     Jx.resize(1, nx);
     Jx.setZero();
 }
@@ -2081,31 +2082,46 @@ void Region_bounds::calc(Eigen::Ref<Vxd> r,
 
 void Region_bounds::calc(Eigen::Ref<Vxd> r, const Eigen::Ref<const Vxd>& x) {
     check_input_calc(r, x);
-    // Find the region the robot is most inside (minimum signed distance).
-    double min_d = std::numeric_limits<double>::max();
+    // Soft-min via log-sum-exp: d_soft = m - (1/β)*log(Σ exp(-β*(d_i - m)))
+    double m = std::numeric_limits<double>::max();
     for (auto& reg : regions)
-        min_d = std::min(min_d, reg.signed_distance(x.head(nx_effective)));
-    // Hinge: zero if inside any region, positive if outside all.
-    r(0) = std::max(weight * min_d, 0.0);
+        m = std::min(m, reg.signed_distance(x.head(nx_effective)));
+    double Z = 0.0;
+    for (auto& reg : regions)
+        Z += std::exp(-beta * (reg.signed_distance(x.head(nx_effective)) - m));
+    double min_d = m - std::log(Z) / beta;
+    // Quadratic hinge: 0.5 * w * max(0, d)^2.  Gradient scales with violation
+    // depth, so DDP's line search sees a smoothly shrinking push rather than
+    // the constant-magnitude push of a linear hinge.
+    double viol = std::max(min_d, 0.0);
+    r(0) = 0.5 * weight * viol * viol;
 }
 
 void Region_bounds::calcDiff(Eigen::Ref<Vxd> Lx, Eigen::Ref<MatXd> Lxx,
                              const Eigen::Ref<const Vxd>& x) {
     check_input_calcDiff(Lx, Lxx, x);
     Jx.setZero();
-    // Find the best region (smallest signed distance).
-    int best = 0;
-    double min_d = std::numeric_limits<double>::max();
-    for (int i = 0; i < (int)regions.size(); i++) {
-        double d = regions[i].signed_distance(x.head(nx_effective));
-        if (d < min_d) { min_d = d; best = i; }
-    }
-    double cost = weight * min_d;
-    if (cost > 0) {  // outside all regions — penalize
-        Eigen::VectorXd grad = weight * regions[best].distance_gradient(x.head(nx_effective));
-        Jx.block(0, 0, 1, nx_effective) = grad.transpose();
-        Lx  += cost * Jx.transpose();
-        Lxx += Jx.transpose() * Jx;
+    // Soft-min: compute per-region distances and softmax weights
+    double m = std::numeric_limits<double>::max();
+    for (auto& reg : regions)
+        m = std::min(m, reg.signed_distance(x.head(nx_effective)));
+    double Z = 0.0;
+    for (auto& reg : regions)
+        Z += std::exp(-beta * (reg.signed_distance(x.head(nx_effective)) - m));
+    double min_d = m - std::log(Z) / beta;
+
+    double viol = min_d;
+    if (viol > 0) {  // outside all regions — penalize
+        // Blend per-region gradients with softmax weights w_i = exp(-β*(d_i-m))/Z
+        Eigen::VectorXd blended = Eigen::VectorXd::Zero(nx_effective);
+        for (auto& reg : regions) {
+            double d_i = reg.signed_distance(x.head(nx_effective));
+            double w_i = std::exp(-beta * (d_i - m)) / Z;
+            blended += w_i * reg.distance_gradient(x.head(nx_effective));
+        }
+        Jx.block(0, 0, 1, nx_effective) = blended.transpose();
+        Lx  += weight * viol * Jx.transpose();
+        Lxx += weight * Jx.transpose() * Jx;  // rank-1 GN approximation
     }
 }
 
