@@ -276,7 +276,7 @@ ompl::NearestNeighbors<_T> *nigh_factory(
 
     out = new NearestNeighborsNigh<_T, __Space>(space, data_to_key);
 
-  } else if (startsWith(name, "unicycle2")) {
+  } else if (startsWith(name, "unicycle2") || startsWith(name, "unicycle_second_order_0")) {
 
     auto data_to_key = [robot, fun](_T const &m) {
       using Vector5d = Eigen::Matrix<double, 5, 1>;
@@ -430,7 +430,7 @@ ompl::NearestNeighbors<_T> *nigh_factory2(
       out = new NearestNeighborsNigh<_T, __SpaceWithCost>(space, data_to_key);
     }
 
-  } else if (startsWith(name, "unicycle2")) {
+  } else if (startsWith(name, "unicycle2") || startsWith(name, "unicycle_second_order_0")) {
 
     if (cost_scale < 0) {
       auto data_to_key = [robot, fun](_T const &m) {
@@ -617,7 +617,7 @@ ompl::NearestNeighbors<_T> *nigh_factory_t(
       out = new NearestNeighborsNigh<_T, __SpaceWithCost>(space, data_to_key);
     }
 
-  } else if (startsWith(name, "unicycle2")) {
+  } else if (startsWith(name, "unicycle2") || startsWith(name, "unicycle_second_order_0")) {
 
     if (cost_scale < 0) {
       auto data_to_key = [robot, fun, reverse_search](_T const &m) {
